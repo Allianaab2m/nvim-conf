@@ -96,7 +96,7 @@ require('jetpack-init') {
 
   -- Statusbar
   { 'nvim-lualine/lualine.nvim',
-    requires = 'kyazdani42/nvim-web-devicons',
+    requires = { 'nvim-tree/nvim-web-devicons' },
     event = {
       'BufRead',
       'BufNewFile'
