@@ -91,6 +91,9 @@ require('jetpack-init') {
     end
   },
 
+  -- Icon
+  { 'nvim-tree/nvim-web-devicons' },
+
   -- Statusbar
   { 'nvim-lualine/lualine.nvim',
     requires = 'kyazdani42/nvim-web-devicons',
@@ -145,9 +148,6 @@ require('jetpack-init') {
   -- Appearance
   { 'EdenEast/nightfox.nvim',
     config = 'vim.cmd [[colorscheme duskfox]]' },
-
-  -- Icon
-  { 'nvim-tree/nvim-web-devicons' },
 
   -- Tab bar
   { 'romgrk/barbar.nvim',
