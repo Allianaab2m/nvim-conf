@@ -149,6 +149,9 @@ require('jetpack-init') {
   { 'EdenEast/nightfox.nvim',
     config = 'vim.cmd [[colorscheme duskfox]]' },
 
+  -- Fygitive
+  { 'tpope/vim-fugitive' },
+
   -- Tab bar
   { 'romgrk/barbar.nvim',
     event = {
