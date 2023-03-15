@@ -153,7 +153,7 @@ require('lazy-init') {
 }
 
 -- Handle vim notifications
--- vim.notify = require('notify')
+vim.notify = require('notify')
 
 ---- Key bindings ----
 -- Disable F1 (Help) key
