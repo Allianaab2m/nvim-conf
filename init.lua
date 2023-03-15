@@ -1,12 +1,6 @@
 local util = require('util')
 local assign = util.assign
 
-local jetpackfile = vim.fn.stdpath('data') .. '/site/pack/jetpack/opt/vim-jetpack/plugin/jetpack.vim'
-local jetpackurl = 'https://raw.githubusercontent.com/tani/vim-jetpack/master/plugin/jetpack.vim'
-if vim.fn.filereadable(jetpackfile) == 0 then
-  vim.fn.system(string.format('curl -fsSLo %s --create-dirs %s', jetpackfile, jetpackurl))
-end
-
 assign(vim.g) {
   belloff = 'all',
   did_install_default_menus = 1,
@@ -32,7 +26,6 @@ assign(vim.opt) {
   listchars = 'tab:^  ,trail:-',
   mouse = '',
   number = true,
-  relativenumber = true,
   expandtab = true,
   tabstop = 2,
   shiftwidth = 2,
@@ -41,11 +34,35 @@ assign(vim.opt) {
   completeopt = 'menu,menuone,noselect',
 }
 
-require('jetpack-init') {
-  { 'tani/vim-jetpack', opt = 1 },
+require('lazy-init') {
+  -- Appearance
+  { 'arzg/vim-colors-xcode',
+    init = function()
+      vim.cmd[[colorscheme xcodedark]]
+    end
+  },
+  
+  -- File explorer
+  { 'lambdalisue/fern.vim' },
 
-  -- Startup time
-  { 'dstein64/vim-startuptime', cmd = 'StartupTime', opt = 1 },
+  -- Fugitive
+  { 'tpope/vim-fugitive' },
+
+  -- Icon
+  { 'nvim-tree/nvim-web-devicons' },
+
+  -- LSP
+  { 'williamboman/mason.nvim',
+    config = function()
+      require('mason').setup {}
+    end,  
+  },  
+  { 'williamboman/mason-lspconfig.nvim',
+    config = function()
+      require('mason-lspconfig').setup {}
+    end,  
+  },  
+  { 'neovim/nvim-lspconfig' },
 
   -- Notification
   { 'rcarriga/nvim-notify',
@@ -56,18 +73,6 @@ require('jetpack-init') {
 
   -- Scrollbar
   { 'petertriho/nvim-scrollbar',
-    event = {
-      'BufRead',
-      'BufNewFile',
-      'BufWinEnter',
-      'CmdwinLeave',
-      'TabEnter',
-      'TermEnter',
-      'TextChanged',
-      'VimResized',
-      'WinEnter',
-      'WinScrolled',
-    },
     config = function()
       require('scrollbar').setup {}
     end,
@@ -75,24 +80,20 @@ require('jetpack-init') {
 
   -- Smooth scroll
   { 'psliwka/vim-smoothie',
-    event = {
-      'BufRead',
-      'BufNewFile'
-    },
-    setup = function()
-      local g = require('util').assign(vim.g)
+  config = function()
+    local g = require('util').assign(vim.g)
+    
+    g {
+      smoothie_experimental_mapping = false,
+      smoothie_update_interval = 16,
+      smoothie_speed_constant_factor = 16,
+      smoothie_speed_exponentiiationi_factor = 16,
+    }
+  end
+},
 
-      g {
-        smoothie_experimental_mapping = false,
-        smoothie_update_interval = 16,
-        smoothie_speed_constant_factor = 16,
-        smoothie_speed_exponentiiationi_factor = 16,
-      }
-    end
-  },
-
-  -- Icon
-  { 'nvim-tree/nvim-web-devicons' },
+  -- Startup time
+  { 'dstein64/vim-startuptime' },
 
   -- Statusbar
   { 'nvim-lualine/lualine.nvim',
@@ -145,50 +146,42 @@ require('jetpack-init') {
     end
   },
 
-  -- Appearance
-  { 'EdenEast/nightfox.nvim',
-    config = 'vim.cmd [[colorscheme duskfox]]' },
-
-  -- Fugitive
-  { 'tpope/vim-fugitive' },
-
-  -- Tab bar
+  -- Tab bar (barbar)
   { 'romgrk/barbar.nvim',
-    event = {
-      'BufRead',
-      'BufNewFile'
-    },
-    config = function()
-      require('bufferline').setup {
-        icons = true
-      }
-    end
-  },
-
-  -- File explorer
-  { 'lambdalisue/fern.vim',
-    event = {
-      'BufRead',
-      'BufNewFile'
-    }
+    dependencies = 'nvim-tree/nvim-web-devicons'
   }
 }
 
 -- Handle vim notifications
-vim.notify = require('notify')
+-- vim.notify = require('notify')
+
+---- Key bindings ----
+-- Disable F1 (Help) key
+vim.keymap.set('', '<F1>', '<NOP>')
+
+---- End Function key ----
+
+-- Disable Arrow key --
+vim.keymap.set('', '<F1>', '<NOP>')
+
+---- End Arrow key ----
+
+---- Tab ----
 
 -- New tab
-vim.keymap.set('', '<A-t>', ':enew<CR>', { noremap = true, silent = true })
+vim.keymap.set('', '<A-t>', ':enew<CR>')
 
 -- Switch tab
-vim.keymap.set('', '<A-,>', ':BufferPrevious<CR>', { noremap = true, silent = true })
-vim.keymap.set('', '<A-.>', ':BufferNext<CR>', { noremap = true, silent = true })
+vim.keymap.set('', '<A-,>', ':BufferPrevious<CR>')
+vim.keymap.set('', '<A-.>', ':BufferNext<CR>')
 
 -- Close tab
-vim.keymap.set('', '<A-w>', ':BufferClose<CR>', { noremap = true, silent = true })
+vim.keymap.set('', '<A-w>', ':BufferClose<CR>')
 
 -- Kill tab
-vim.keymap.set('', '<A-q>', ':BufferClose!<CR>', { noremap = true, silent = true })
+vim.keymap.set('', '<A-q>', ':BufferClose!<CR>')
+
+---- End Tab ----
 
 -- Toggle explorer pane
-vim.keymap.set('', '<A-S-f>', ':Fern . -drawer -toggle <CR>', { noremap = true, silent = true })
+vim.keymap.set('', '<A-S-f>', ':Fern . -drawer -toggle <CR>')
