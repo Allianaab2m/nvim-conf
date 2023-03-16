@@ -35,13 +35,27 @@ assign(vim.opt) {
 }
 
 require('lazy-init') {
+  { 'nathom/filetype.nvim' },
+
   -- Appearance
+  { 'norcalli/nvim-colorizer.lua',
+    config = function()
+      require('colorizer').setup()
+    end
+  },
   { 'arzg/vim-colors-xcode',
     init = function()
       vim.cmd[[colorscheme xcodedark]]
     end
   },
-  
+
+  -- Color picker
+  { 'ziontee113/color-picker.nvim',
+    config = function()
+      require("color-picker").setup()
+    end
+  },
+
   -- File explorer
   { 'lambdalisue/fern.vim' },
 
@@ -55,12 +69,12 @@ require('lazy-init') {
   { 'williamboman/mason.nvim',
     config = function()
       require('mason').setup {}
-    end,  
+    end  
   },  
   { 'williamboman/mason-lspconfig.nvim',
     config = function()
       require('mason-lspconfig').setup {}
-    end,  
+    end  
   },  
   { 'neovim/nvim-lspconfig' },
 
@@ -68,32 +82,32 @@ require('lazy-init') {
   { 'rcarriga/nvim-notify',
     config = function()
       require('notify').setup {}
-    end,
+    end
   },
 
   -- Scrollbar
   { 'petertriho/nvim-scrollbar',
     config = function()
       require('scrollbar').setup {}
-    end,
+    end
   },
 
   -- Smooth scroll
   { 'psliwka/vim-smoothie',
-  config = function()
-    local g = require('util').assign(vim.g)
-    
-    g {
-      smoothie_experimental_mapping = false,
-      smoothie_update_interval = 16,
-      smoothie_speed_constant_factor = 16,
-      smoothie_speed_exponentiiationi_factor = 16,
-    }
-  end
-},
+    config = function()
+      local g = require('util').assign(vim.g)
+      
+      g {
+        smoothie_experimental_mapping = false,
+        smoothie_update_interval = 16,
+        smoothie_speed_constant_factor = 16,
+        smoothie_speed_exponentiiationi_factor = 16,
+      }
+    end
+  },
 
   -- Startup time
-  { 'dstein64/vim-startuptime' },
+  { 'dstein64/vim-startuptime', cmd = 'StartupTime' },
 
   -- Statusbar
   { 'nvim-lualine/lualine.nvim',
@@ -151,9 +165,6 @@ require('lazy-init') {
     dependencies = 'nvim-tree/nvim-web-devicons'
   }
 }
-
--- Handle vim notifications
-vim.notify = require('notify')
 
 ---- Key bindings ----
 -- Disable F1 (Help) key
