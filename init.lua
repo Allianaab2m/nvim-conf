@@ -1,3 +1,4 @@
+vim.api.nvim_set_keymap("i", "jj", "<Esc>", {})
 local util = require('util')
 local assign = util.assign
 
@@ -74,48 +75,186 @@ require('lazy-init') {
 
   -- {{{ LSP
   {
-    'williamboman/mason-lspconfig.nvim',
+    'neovim/nvim-lspconfig',
+    event = { "BufReadPre", "BufNewFile" },
     dependencies = {
-      'williamboman/mason.nvim',
+      "williamboman/mason-lspconfig.nvim",
+      "williamboman/mason.nvim",
+      "folke/neodev.nvim", -- for nvim api completion
+      "folke/lsp-colors.nvim",
+      "hrsh7th/cmp-nvim-lsp",
+      "nvim-lua/plenary.nvim",
     },
     config = function()
-      require('mason').setup {}
-      require('mason-lspconfig').setup {}
-    end
-  },
-  {
-    'neovim/nvim-lspconfig',
-    config = function()
-      require('lspconfig').setup {
-        snippet = {
-          expand = function(args)
-            vim.fn["vsnip#anonymous"](args.body)
-          end,
-        },
-        window = {
-          completion = cmp.config.window.bordered(),
-          documentation = cmp.config.window.bordered(),
-        },
-        mapping = cmp.mapping.preset.insert({
-          ['<C-b>'] = cmp.mapping.scroll_docs(-4),
-          ['<C-f>'] = cmp.mapping.scroll_docs(4),
-          ['<C-Space>'] = cmp.mapping.complete(),
-          ['<C-e>'] = cmp.mapping.abort(),
-          ['<CR>'] = cmp.mapping.confirm({ select = true }),
-        }),
-        sources = cmp.config.sources({
-          { name = 'nvim_lsp' },
-          { name = 'vsnip' }, -- For vsnip users.
-        }, {
-          { name = 'buffer' },
-        })
+      require("mason").setup()
+      require("neodev").setup()
+
+      local signs = {
+        { name = "DiagnosticSignError", text = "" },
+        { name = "DiagnosticSignWarn", text = "" },
+        { name = "DiagnosticSignHint", text = "" },
+        { name = "DiagnosticSignInfo", text = "" },
       }
+
+      for _, sign in ipairs(signs) do
+        vim.fn.sign_define(sign.name, { text_hl = sign.name, numhl = sign.name, text = sign.text })
+      end
+
+      local function lsp_keymaps(bufnr)
+        local opts = { noremap = true, silient = true }
+        local keymap = vim.api.nvim_buf_set_keymap
+        keymap(bufnr, "n", "gD", "<cmd>lua vim.lsp.buf.declaration()<CR>", opts)
+        keymap(bufnr, "n", "gd", "<cmd>lua vim.lsp.buf.definition()<CR>", opts)
+        keymap(bufnr, "n", "K", "<cmd>lua vim.lsp.buf.hover()<CR>", opts)
+        keymap(bufnr, "n", "gI", "<cmd>lua vim.lsp.buf.implementation()<CR>", opts)
+        keymap(bufnr, "n", "gr", "<cmd>lua vim.lsp.buf.references()<CR>", opts)
+        keymap(bufnr, "n", "gl", "<cmd>lua vim.lsp.diagnostic.open_float()<CR>", opts)
+        keymap(bufnr, "n", "<leader>lf", "<cmd>lua vim.lsp.buf.format { async = true }<CR>", opts)
+        keymap(bufnr, "n", "<leader>li", "<cmd>LspInfo<CR>", opts)
+        keymap(bufnr, "n", "<leader>la", "<cmd>lua vim.lsp.buf.code_action()<CR>", opts)
+        keymap(bufnr, "n", "<leader>lj", "<cmd>lua vim.diagnostic.goto_next({buffer = 0, float = false})<CR>", opts)
+        keymap(bufnr, "n", "<leader>lk", "<cmd>lua vim.diagnostic.goto_prev({buffer = 0, float = false})<CR>", opts)
+        keymap(bufnr, "n", "<leader>lr", "<cmd>lua vim.lsp.buf.rename()<CR>", opts)
+        keymap(bufnr, "n", "<leader>lq", "<cmd>TroubleToggle document_diagnostics<CR>", opts)
+      end
+
+      local lsp = require("lspconfig")
+      local capabilities = require("cmp_nvim_lsp").default_capabilities()
+
+      local server_configs = {
+        sumneko_lua = {
+          settings = {
+            Lua = {
+              completion = {
+                callSnippet = "Replace"
+              }
+            }
+          }
+        }
+      }
+
+      require("mason-lspconfig").setup_handlers({
+        function(name)
+          local config = server_configs[name] or {}
+          config.capabilities = capabilities
+          config.on_attach = function(client, bufnr)
+            lsp_keymaps(bufnr)
+          end
+
+          lsp[name].setup(config)
+        end
+      })
+
     end
   },
   -- }}}
 
   -- {{{ CMP
+  {
+    "hrsh7th/nvim-cmp",
+    event = "InsertEnter",
+    dependencies = {
+      "hrsh7th/cmp-vsnip",
+      "hrsh7th/vim-vsnip",
+      "hrsh7th/cmp-buffer",
+      "hrsh7th/cmp-cmdline",
+      "onsails/lspkind.nvim",
+    },
+    config = function()
+      local has_word_before = function()
+        local line, col = unpack(vim.api.nvim_win_get_cursor(0))
+        return col ~= 0
+          and vim.api.nvim_buf_get_lines(0, line - 1, line, true)[1]:sub(col, col):match("%s") == nil
+      end
 
+      local feedkey = function(key, mode)
+        vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(key, true, true, true), mode, true)
+      end
+
+      local cmp = require("cmp")
+      local context = require("cmp.config.context")
+
+      cmp.setup({
+        enabled = function()
+          if vim.api.nvim_get_mode().mode == "c" then
+            return true
+          else
+            return not context.in_treesitter_capture("comment") and not context.in_syntax_group("Comment")
+          end
+        end,
+        window = {
+          completion = {
+            winhighlight = "Normal:Pmenu,FloatBorder:Pmenu,Search:None",
+            col_offset = -3,
+            side_padding = 0,
+            border = "single"
+          },
+          documentation = cmp.config.window.bordered({ border = "single" })
+        },
+        formatting = {
+          fields = { "abbr", "kind", "menu" },
+          format = function (entry, vim_item)
+            local kind = require("lspkind").cmp_format({ mode = "symbol_text", max_width = 50})(entry, vim_item)
+            local strings = vim.split(kind.kind, "%s", {trimempty = true})
+            kind.kind = " " .. strings[1] .. " "
+            kind.menu = "    (" .. strings[2] .. ")"
+
+            return kind
+          end
+        },
+        snippet = {
+          expand = function(args)
+            vim.fn["vsnip#anonymous"](args.body)
+          end
+        },
+        mapping = {
+          ["<Tab>"] = cmp.mapping(function(fallback)
+            if cmp.visible() then
+              cmp.select_next_item()
+            elseif vim.fn["vsnip#available"](1) == 1 then
+              feedkey("<Plug>(vsnip-expand-or-jump)", "")
+            elseif has_word_before() then
+              cmp.complete()
+            else
+              fallback()
+            end
+          end, {"i", "s"}),
+          ["<S-Tab>"] = cmp.mapping(function()
+            if cmp.visible() then
+              cmp.select_prev_item()
+            elseif vim.fn["vsnip#jumpable"](-1) == 1 then
+              feedkey("<Plug>(vsnip-jump-prev)", "")
+            end
+          end, { "i", "s" }),
+          ["<CR>"] = cmp.mapping.confirm({ select = true })
+        },
+        sources = cmp.config.sources({
+          { name = "nvim_lsp" },
+          { name = "vsnip" },
+          { name = "buffer", max_item_count = 10 },
+        }),
+        experimental = {
+          ghost_text = true
+        }
+      })
+
+      --cmp.setting.cmdline(":", {
+       -- mapping = cmp.mapping.preset.cmdline(),
+        --sources = cmp.config.sources({
+         -- { name = "path" },
+          --{ name = "cmdline"},
+       -- })
+     -- })
+
+      --cmp.setting.cmdline("/", {
+       -- mapping = cmp.mapping.preset.cmdline(),
+        --source = cmp.config.souces({
+         -- { name = "buffer" }
+        --})
+     -- })
+
+      end
+},
   -- }}}
 
   -- {{{ Notification
@@ -220,8 +359,13 @@ require('lazy-init') {
   }
   -- }}}
 }
-
 ---- Key bindings ----
+
+-- {{{ Set leader key
+local opts = { silent = true }
+vim.keymap.set("", "<Space>", "<nop>", opts)
+vim.g.mapleader = " "
+-- }}}
 
 -- {{{ Disable F1 (Help) key
 vim.keymap.set('', '<F1>', '<NOP>')
