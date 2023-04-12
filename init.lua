@@ -35,68 +35,117 @@ assign(vim.opt) {
 }
 
 require('lazy-init') {
-  { 'nathom/filetype.nvim' },
-
-  -- Appearance
-  { 'norcalli/nvim-colorizer.lua',
+  --{{{ Appearance
+  {
+    'norcalli/nvim-colorizer.lua',
     config = function()
       require('colorizer').setup()
     end
   },
-  { 'arzg/vim-colors-xcode',
+  {
+    'arzg/vim-colors-xcode',
     init = function()
-      vim.cmd[[colorscheme xcodedark]]
+      vim.cmd [[colorscheme xcodedark]]
     end
   },
+  -- }}}
 
-  -- Color picker
-  { 'ziontee113/color-picker.nvim',
+  -- {{{ Color picker
+  {
+    'ziontee113/color-picker.nvim',
     config = function()
       require("color-picker").setup()
     end
   },
+  -- }}}
 
-  -- File explorer
+  -- {{{ File explorer
   { 'lambdalisue/fern.vim' },
+  -- }}}
 
-  -- Fugitive
+  -- {{{ Fugitive
   { 'tpope/vim-fugitive' },
+  -- }}}
 
-  -- Icon
+  -- {{{ Icon
   { 'nvim-tree/nvim-web-devicons' },
+  -- }}}
 
-  -- LSP
-  { 'williamboman/mason.nvim',
+
+  -- {{{ LSP
+  {
+    'williamboman/mason-lspconfig.nvim',
+    dependencies = {
+      'williamboman/mason.nvim',
+    },
     config = function()
       require('mason').setup {}
-    end  
-  },  
-  { 'williamboman/mason-lspconfig.nvim',
-    config = function()
       require('mason-lspconfig').setup {}
-    end  
-  },  
-  { 'neovim/nvim-lspconfig' },
+    end
+  },
+  {
+    'neovim/nvim-lspconfig',
+    config = function()
+      require('lspconfig').setup {
+        snippet = {
+          expand = function(args)
+            vim.fn["vsnip#anonymous"](args.body)
+          end,
+        },
+        window = {
+          completion = cmp.config.window.bordered(),
+          documentation = cmp.config.window.bordered(),
+        },
+        mapping = cmp.mapping.preset.insert({
+          ['<C-b>'] = cmp.mapping.scroll_docs(-4),
+          ['<C-f>'] = cmp.mapping.scroll_docs(4),
+          ['<C-Space>'] = cmp.mapping.complete(),
+          ['<C-e>'] = cmp.mapping.abort(),
+          ['<CR>'] = cmp.mapping.confirm({ select = true }),
+        }),
+        sources = cmp.config.sources({
+          { name = 'nvim_lsp' },
+          { name = 'vsnip' }, -- For vsnip users.
+        }, {
+          { name = 'buffer' },
+        })
+      }
+    end
+  },
+  -- }}}
 
-  -- Notification
-  { 'rcarriga/nvim-notify',
+  -- {{{ CMP
+
+  -- }}}
+
+  -- {{{ Notification
+  {
+    'rcarriga/nvim-notify',
     config = function()
       require('notify').setup {}
     end
   },
+  -- }}}
 
-  -- Scrollbar
-  { 'petertriho/nvim-scrollbar',
+  -- {{{ Scrollbar
+  {
+    'petertriho/nvim-scrollbar',
+    event = {
+      'BufRead',
+      'BufNewFile'
+    },
     config = function()
       require('scrollbar').setup {}
     end
   },
+  -- }}}
 
-  -- Smooth scroll
-  { 'psliwka/vim-smoothie',
+  -- {{{ Smooth scroll
+  {
+    'psliwka/vim-smoothie',
     config = function()
       local g = require('util').assign(vim.g)
-      
+
       g {
         smoothie_experimental_mapping = false,
         smoothie_update_interval = 16,
@@ -105,12 +154,11 @@ require('lazy-init') {
       }
     end
   },
+  -- }}}
 
-  -- Startup time
-  { 'dstein64/vim-startuptime', cmd = 'StartupTime' },
-
-  -- Statusbar
-  { 'nvim-lualine/lualine.nvim',
+  -- {{{ Statusbar
+  {
+    'nvim-lualine/lualine.nvim',
     requires = { 'nvim-tree/nvim-web-devicons' },
     event = {
       'BufRead',
@@ -121,8 +169,8 @@ require('lazy-init') {
         options = {
           icons_enabled = true,
           theme = 'auto',
-          component_separators = { left = '', right = ''},
-          section_separators = { left = '', right = ''},
+          component_separators = { left = '', right = '' },
+          section_separators = { left = '', right = '' },
           disabled_filetypes = {
             statusline = {},
             winbar = {},
@@ -137,18 +185,18 @@ require('lazy-init') {
           }
         },
         sections = {
-          lualine_a = {'mode'},
-          lualine_b = {'branch', 'diff', 'diagnostics'},
-          lualine_c = {'filename'},
-          lualine_x = {'encoding', 'fileformat', 'filetype'},
-          lualine_y = {'progress'},
-          lualine_z = {'location'}
+          lualine_a = { 'mode' },
+          lualine_b = { 'branch', 'diff', 'diagnostics' },
+          lualine_c = { 'filename' },
+          lualine_x = { 'encoding', 'fileformat', 'filetype' },
+          lualine_y = { 'progress' },
+          lualine_z = { 'location' }
         },
         inactive_sections = {
           lualine_a = {},
           lualine_b = {},
-          lualine_c = {'filename'},
-          lualine_x = {'location'},
+          lualine_c = { 'filename' },
+          lualine_x = { 'location' },
           lualine_y = {},
           lualine_z = {}
         },
@@ -159,40 +207,60 @@ require('lazy-init') {
       }
     end
   },
+  -- }}}
 
-  -- Tab bar (barbar)
-  { 'romgrk/barbar.nvim',
+  -- {{{ Tab bar (barbar)
+  {
+    'romgrk/barbar.nvim',
+    event = {
+      'BufRead',
+      'BufNewFile'
+    },
     dependencies = 'nvim-tree/nvim-web-devicons'
   }
+  -- }}}
 }
 
 ---- Key bindings ----
--- Disable F1 (Help) key
+
+-- {{{ Disable F1 (Help) key
 vim.keymap.set('', '<F1>', '<NOP>')
+-- }}}
 
----- End Function key ----
+-- {{{ Disable Delete key
+vim.keymap.set('', '<Delete>', '<NOP>')
+-- }}}
 
--- Disable Arrow key --
+-- {{{ Disable Arrow key
 vim.keymap.set('', '<F1>', '<NOP>')
-
----- End Arrow key ----
+-- }}}
 
 ---- Tab ----
 
--- New tab
+-- {{{ New tab
 vim.keymap.set('', '<A-t>', ':enew<CR>')
+-- }}}
 
--- Switch tab
+-- {{{ Switch tab
 vim.keymap.set('', '<A-,>', ':BufferPrevious<CR>')
 vim.keymap.set('', '<A-.>', ':BufferNext<CR>')
+-- }}}
 
--- Close tab
+-- {{{ Swap tab
+vim.keymap.set('', '<A-<>', ':BufferMovePrevious<CR>')
+vim.keymap.set('', '<A->>', ':BufferMoveNext<CR>')
+-- }}}
+
+-- {{{ Close tab
 vim.keymap.set('', '<A-w>', ':BufferClose<CR>')
+-- }}}
 
--- Kill tab
+-- {{{ Kill tab
 vim.keymap.set('', '<A-q>', ':BufferClose!<CR>')
+-- }}}
 
----- End Tab ----
-
--- Toggle explorer pane
+-- {{{ Toggle explorer pane
 vim.keymap.set('', '<A-S-f>', ':Fern . -drawer -toggle <CR>')
+-- }}}
+
+-- vim:se fdm=marker:
